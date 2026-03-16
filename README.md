@@ -1,312 +1,221 @@
-Kelly Autoencoder in Asset Pricing with SIC-based GNN Extension
-Overview
+# Autoencoder Asset Pricing with SIC-based Graph Neural Networks
 
-This project reproduces the autoencoder-based asset pricing framework proposed by Kelly, Pruitt, and Su, and extends it by replacing or augmenting the latent factor extraction module with a Graph Neural Network (GNN) based on SIC industry classification.
+Reproduction and extension of the **Autoencoder Asset Pricing** framework with **Graph Neural Networks (GNN)** using **SIC industry classification**.
 
-The core idea is to combine:
+This project reproduces the deep asset pricing model proposed by **Kelly, Pruitt, and Su** and extends it by incorporating **industry graph structures** through **Graph Neural Networks** to improve cross-sectional asset pricing.
 
-Autoencoder asset pricing for latent factor discovery,
+---
 
-Firm characteristics as cross-sectional predictors,
+# Overview
 
-SIC-based industry graph structure to model economic linkages across firms,
+Recent advances in machine learning have enabled flexible nonlinear asset pricing models. One influential approach is the **Autoencoder Asset Pricing framework**, which uses deep neural networks to estimate **latent pricing factors** and **firm-specific loadings**.
 
-and GNN-based representation learning for improved cross-sectional asset pricing.
+However, most deep asset pricing models treat firms as **independent observations**, ignoring economic relationships such as:
 
-This project aims to answer the following questions:
+- industry membership
+- supply chain linkages
+- product market similarity
+- macro exposure clustering
 
-Can the Kelly-style autoencoder framework be successfully reproduced on standard firm-characteristic data?
+This project introduces a **graph-based extension** where firms are connected based on **SIC industry classification**, and a **Graph Neural Network (GNN)** learns cross-sectional dependencies between firms.
 
-Can a GNN built on SIC industry relations improve latent representation learning in asset pricing?
+The project contains two main components:
 
-Does incorporating industry graph structure enhance pricing accuracy, factor interpretability, and portfolio performance?
+1. **Reproduction of Autoencoder Asset Pricing**
+2. **GNN-based extension using SIC industry graphs**
 
-Motivation
+---
 
-Traditional linear factor models, such as CAPM or Fama-French, impose strong structure on the pricing kernel. In contrast, the autoencoder in asset pricing framework uses deep learning to estimate latent pricing factors and firm-specific loadings in a flexible nonlinear way.
+# Model Framework
 
-However, most existing autoencoder asset pricing models treat firms as independent cross-sectional units, ignoring the economic relationships among firms. In reality, companies are connected through:
+## Baseline: Autoencoder Asset Pricing
 
-industry membership,
+The baseline follows the deep latent factor model structure.
 
-supply chains,
+Input:
 
-product market similarity,
+- firm characteristics \( z_{i,t} \)
 
-and macro exposure clustering.
+Encoder:
 
-This project introduces a graph-based asset pricing extension, where firms are linked according to SIC industry classification, and a Graph Neural Network is used to learn richer firm embeddings for pricing.
+- nonlinear network mapping characteristics to factor loadings
 
-Project Objectives
+Latent factors:
 
-The project has two main components:
+- low-dimensional pricing factors
 
-1. Reproduction of Kelly-style Autoencoder Asset Pricing
+Return reconstruction:
 
-We first reproduce the benchmark autoencoder asset pricing model, including:
+\[
+\hat{r}_{i,t+1} = \beta_{i,t}^\top f_{t+1}
+\]
 
-data preprocessing,
+where
 
-firm characteristic normalization,
+- \( \beta_{i,t} \) is predicted from firm characteristics
+- \( f_t \) are latent pricing factors
 
-latent factor extraction,
+The model learns:
 
-beta/loading estimation,
+- nonlinear mapping from characteristics to betas
+- latent factor structure in asset returns
 
-return reconstruction,
+---
 
-and out-of-sample evaluation.
+## Extension: Graph Neural Network Pricing Model
 
-2. GNN-based Extension with SIC Industry Graph
+We construct a **firm graph** using SIC industry classification.
 
-We then extend the framework by constructing a graph over firms using SIC codes and applying a GNN to learn cross-sectional dependence.
+Graph structure:
 
-Possible graph definitions include:
+- Node: firm
+- Edge: firms sharing the same SIC industry
+- Node features: firm characteristics
 
-same 2-digit SIC industry,
+The GNN aggregates information across firms in the same industry:
 
-same 3-digit SIC industry,
+\[
+h_i^{(k+1)} = \sigma \left( \sum_{j \in N(i)} W h_j^{(k)} \right)
+\]
 
-weighted adjacency based on SIC distance,
+This allows the model to learn **industry-aware firm representations**.
 
-dynamic graph by year/month.
+Possible implementations include:
 
-The GNN replaces or complements the original encoder network to produce firm embeddings or factor loadings used for return prediction and pricing tests.
+- GCN
+- GraphSAGE
+- GAT
+- Temporal GNN
 
-Model Architecture
-Baseline: Autoencoder in Asset Pricing
+---
 
-The baseline model follows the logic of deep latent factor pricing:
+# Project Goals
 
-Input: firm characteristics 
-𝑧
-𝑖
-,
-𝑡
-z
-i,t
-	​
+The main research questions are:
 
+1. Can the Kelly-style autoencoder asset pricing model be successfully reproduced?
+2. Does incorporating **industry graph structure** improve pricing accuracy?
+3. Can **GNN-based firm embeddings** enhance cross-sectional return prediction?
+4. Does graph-based pricing reduce pricing errors relative to the baseline model?
 
-Encoder: maps characteristics into latent representations
+---
 
-Latent factors: low-dimensional pricing factors
+# Data
 
-Decoder / pricing layer: reconstructs expected returns through factor loadings and latent factors
+The project is designed for standard empirical asset pricing datasets.
 
-In simplified form:
+Typical data sources include:
 
-𝑟
-^
-𝑖
-,
-𝑡
-+
-1
-=
-𝛽
-𝑖
-,
-𝑡
-⊤
-𝑓
-𝑡
-+
-1
-r
-^
-i,t+1
-	​
+- CRSP monthly returns
+- Compustat accounting data
+- Firm characteristics (e.g. Gu, Kelly & Xiu dataset)
+- Risk-free rate
+- SIC industry classification
 
-=β
-i,t
-⊤
-	​
+Example firm characteristics:
 
-f
-t+1
-	​
+- size
+- book-to-market
+- momentum
+- profitability
+- investment
+- volatility
+- liquidity
+- leverage
 
+Industry graph construction:
 
-where:
+- SIC 2-digit
+- SIC 3-digit
+- SIC 4-digit
 
-𝛽
-𝑖
-,
-𝑡
-β
-i,t
-	​
+---
 
- is a nonlinear function of firm characteristics,
+# Methodology
 
-𝑓
-𝑡
-+
-1
-f
-t+1
-	​
+## Step 1 — Data preprocessing
 
- is a set of latent pricing factors.
+- merge CRSP and Compustat
+- construct firm characteristic panel
+- align firm-month observations
+- normalize characteristics cross-sectionally
+- winsorize extreme values
+- split train / validation / test sets
 
-Extension: SIC-based GNN for Asset Pricing
+---
 
-In the GNN extension:
+## Step 2 — Reproduce autoencoder asset pricing
 
-each firm is a node,
+Implement baseline deep asset pricing model.
 
-edges are defined using SIC industry proximity,
+Components:
 
-node features are firm characteristics,
+- encoder network
+- latent factor estimation
+- return reconstruction
+- training via reconstruction loss
 
-a GNN aggregates information from economically related firms.
+---
 
-The pipeline becomes:
+## Step 3 — Construct SIC industry graph
 
-Construct firm graph using SIC codes
+Possible graph structures:
 
-Use node features 
-𝑥
-𝑖
-,
-𝑡
-x
-i,t
-	​
+Binary graph
 
- = firm characteristics
+- firms connected if same SIC
 
-Apply GNN layers to obtain firm embeddings
+Hierarchical graph
 
-Map embeddings to factor loadings or return forecasts
+- stronger edges for closer SIC levels
 
-Evaluate pricing performance against the baseline autoencoder
+Dynamic graph
 
-This allows the model to exploit both:
+- update graph over time
 
-firm-level characteristics, and
+---
 
-cross-firm industry structure.
+## Step 4 — Train GNN asset pricing model
 
-Data
+Node features:
 
-This project is designed for standard empirical asset pricing datasets, such as:
+- firm characteristics
 
-CRSP monthly stock returns
+Edges:
 
-Compustat accounting variables
+- SIC-based industry relations
 
-Firm characteristics (e.g. Gu, Kelly, and Xiu style characteristic zoo)
+Outputs:
 
-Risk-free rate / benchmark factors
+- firm embeddings
+- factor loadings
+- predicted returns
 
-SIC codes for industry classification
+---
 
-Typical variables used
+## Step 5 — Model evaluation
 
-monthly stock returns
+Models are evaluated using both **statistical** and **economic** metrics.
 
-market equity
+Statistical metrics:
 
-book-to-market
+- Mean Squared Error
+- Mean Absolute Error
+- Out-of-sample \(R^2\)
 
-momentum
+Asset pricing metrics:
 
-profitability
+- pricing error
+- factor alpha
+- cross-sectional fit
 
-investment
+Economic metrics:
 
-volatility-related variables
+- Sharpe ratio
+- Sortino ratio
+- maximum drawdown
+- long-short portfolio returns
 
-liquidity variables
+---
 
-leverage
-
-and other anomaly predictors
-
-Industry graph inputs
-
-SIC 2-digit / 3-digit / 4-digit codes
-
-industry adjacency matrix
-
-firm-year or firm-month industry mapping
-
-Methodology
-Step 1: Data preprocessing
-
-merge returns, characteristics, and SIC codes
-
-align firm-month observations
-
-winsorize or clip extreme characteristic values
-
-standardize characteristics cross-sectionally
-
-handle missing values
-
-create train / validation / test splits using rolling windows
-
-Step 2: Reproduce the autoencoder baseline
-
-implement encoder-decoder pricing network
-
-estimate latent factors
-
-reconstruct returns
-
-evaluate in-sample and out-of-sample fit
-
-Step 3: Build SIC-based graph
-
-Graph construction options:
-
-Binary graph: connect firms in the same SIC industry
-
-Hierarchical graph: stronger weights for same 3-digit or 4-digit SIC
-
-Temporal graph: update graph monthly/yearly as firm universe changes
-
-Step 4: Train GNN pricing model
-
-Candidate GNN architectures:
-
-GCN
-
-GraphSAGE
-
-GAT
-
-Temporal GNN variants
-
-Possible replacement strategies:
-
-GNN as encoder replacement
-Replace the autoencoder encoder with GNN layers
-
-GNN + autoencoder hybrid
-Use GNN embeddings together with original firm characteristics
-
-GNN for beta estimation
-Predict firm-specific loadings using graph-aware embeddings
-
-Step 5: Evaluation
-
-We compare the baseline and GNN-enhanced models using:
-
-out-of-sample 
-𝑅
-2
-R
-2
-
-pricing errors
-
-cross-sectional prediction accuracy
-
-latent factor interpretability
-
-portfolio sorting performance
-
-Sharpe ratio of characteristic-managed strategies
+# Repository Structure
