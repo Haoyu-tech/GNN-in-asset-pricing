@@ -1,221 +1,69 @@
-# Autoencoder Asset Pricing with SIC-based Graph Neural Networks
+<div align="center">
 
-Reproduction and extension of the **Autoencoder Asset Pricing** framework with **Graph Neural Networks (GNN)** using **SIC industry classification**.
+# Graph-Aware Asset Pricing
 
-This project reproduces the deep asset pricing model proposed by **Kelly, Pruitt, and Su** and extends it by incorporating **industry graph structures** through **Graph Neural Networks** to improve cross-sectional asset pricing.
+Characteristic-based autoencoders, attention models and SIC industry graphs.
 
----
+![Stack: PyTorch](https://img.shields.io/badge/Stack-PyTorch-EE4C2C?style=flat-square) ![Graph: SIC industry](https://img.shields.io/badge/Graph-SIC%20industry-0F766E?style=flat-square) ![Status: Incomplete pipeline](https://img.shields.io/badge/Status-Incomplete%20pipeline-B45309?style=flat-square)
 
-# Overview
+[Quick start](#quick-start) · [Project map](#project-map) · [Reproduction guide](docs/REPRODUCIBILITY.md)
 
-Recent advances in machine learning have enabled flexible nonlinear asset pricing models. One influential approach is the **Autoencoder Asset Pricing framework**, which uses deep neural networks to estimate **latent pricing factors** and **firm-specific loadings**.
-
-However, most deep asset pricing models treat firms as **independent observations**, ignoring economic relationships such as:
-
-- industry membership
-- supply chain linkages
-- product market similarity
-- macro exposure clustering
-
-This project introduces a **graph-based extension** where firms are connected based on **SIC industry classification**, and a **Graph Neural Network (GNN)** learns cross-sectional dependencies between firms.
-
-The project contains two main components:
-
-1. **Reproduction of Autoencoder Asset Pricing**
-2. **GNN-based extension using SIC industry graphs**
+</div>
 
 ---
 
-# Model Framework
+## Overview
 
-## Baseline: Autoencoder Asset Pricing
+Research code exploring whether industry relationships help represent firm characteristics and latent return factors. The repository contains baseline model definitions, attention variants and a SIC graph model.
 
-The baseline follows the deep latent factor model structure.
+## Implementation status
 
-Input:
+| Component | Current state |
+|---|---|
+| Baselines | FF, PCA, IPCA and autoencoder definitions are present |
+| Attention models | CA0Att and CA0AttM are exposed in `main.py` |
+| Graph model | CA0GNN is defined but not wired into the main selector |
+| Full experiment | Blocked by missing `analysis.py` and external model inputs |
+| Neural inference | The main driver explicitly uses CUDA |
 
-- firm characteristics \( z_{i,t} \)
+Model code and saved artifacts alone do not establish a performance improvement.
 
-Encoder:
+## Quick start
 
-- nonlinear network mapping characteristics to factor loadings
+Prepare the external inputs before running preprocessing:
 
-Latent factors:
+```powershell
+python -m pip install -r requirements.txt
+$env:AUTOENCODER_DATA_DIR = "C:/data/Autoencoder_data"
+python data_prepare_gnn.py
+```
 
-- low-dimensional pricing factors
+The input folder must contain `datashare.zip`, `month_ret.pkl`, `ff5.csv` and `UMD.csv` in the expected schemas. Preprocessing writes generated data into `data/`.
 
-Return reconstruction:
+> **Training prerequisite:** restore the original `analysis.py`, prepare the model inputs, and use a compatible PyTorch/CUDA environment before running the experiment driver.
 
-\[
-\hat{r}_{i,t+1} = \beta_{i,t}^\top f_{t+1}
-\]
+## Project map
 
-where
+| Path | Role |
+|---|---|
+| [data_prepare_gnn.py](data_prepare_gnn.py) | Prepare characteristics, returns and graph panels |
+| [main.py](main.py) | Baseline and attention experiment driver |
+| [models/](models/) | Baseline, autoencoder, attention and graph models |
+| [utils.py](utils.py) | Shared characteristic list and settings |
+| [R_squares/](R_squares/) | Saved evaluation summaries |
+| [saved_models/](saved_models/) | Saved model artifacts |
 
-- \( \beta_{i,t} \) is predicted from firm characteristics
-- \( f_t \) are latent pricing factors
+## Evaluation roadmap
 
-The model learns:
+Restore the missing analysis functions, expose an explicit GNN experiment, and compare models on identical train/validation/test periods. Record graph construction, seeds, normalization and evaluation definitions.
 
-- nonlinear mapping from characteristics to betas
-- latent factor structure in asset returns
+## License
 
----
+See [LICENSE](LICENSE) for the existing source license.
 
-## Extension: Graph Neural Network Pricing Model
+## Documentation
 
-We construct a **firm graph** using SIC industry classification.
+- [Reproduction guide](docs/REPRODUCIBILITY.md): inputs, execution order and validation limits.
+- [Code and artifact map](docs/REPOSITORY_MAP.md): source and configuration paths.
 
-Graph structure:
-
-- Node: firm
-- Edge: firms sharing the same SIC industry
-- Node features: firm characteristics
-
-The GNN aggregates information across firms in the same industry:
-
-\[
-h_i^{(k+1)} = \sigma \left( \sum_{j \in N(i)} W h_j^{(k)} \right)
-\]
-
-This allows the model to learn **industry-aware firm representations**.
-
-Possible implementations include:
-
-- GCN
-- GraphSAGE
-- GAT
-- Temporal GNN
-
----
-
-# Project Goals
-
-The main research questions are:
-
-1. Can the Kelly-style autoencoder asset pricing model be successfully reproduced?
-2. Does incorporating **industry graph structure** improve pricing accuracy?
-3. Can **GNN-based firm embeddings** enhance cross-sectional return prediction?
-4. Does graph-based pricing reduce pricing errors relative to the baseline model?
-
----
-
-# Data
-
-The project is designed for standard empirical asset pricing datasets.
-
-Typical data sources include:
-
-- CRSP monthly returns
-- Compustat accounting data
-- Firm characteristics (e.g. Gu, Kelly & Xiu dataset)
-- Risk-free rate
-- SIC industry classification
-
-Example firm characteristics:
-
-- size
-- book-to-market
-- momentum
-- profitability
-- investment
-- volatility
-- liquidity
-- leverage
-
-Industry graph construction:
-
-- SIC 2-digit
-- SIC 3-digit
-- SIC 4-digit
-
----
-
-# Methodology
-
-## Step 1 — Data preprocessing
-
-- merge CRSP and Compustat
-- construct firm characteristic panel
-- align firm-month observations
-- normalize characteristics cross-sectionally
-- winsorize extreme values
-- split train / validation / test sets
-
----
-
-## Step 2 — Reproduce autoencoder asset pricing
-
-Implement baseline deep asset pricing model.
-
-Components:
-
-- encoder network
-- latent factor estimation
-- return reconstruction
-- training via reconstruction loss
-
----
-
-## Step 3 — Construct SIC industry graph
-
-Possible graph structures:
-
-Binary graph
-
-- firms connected if same SIC
-
-Hierarchical graph
-
-- stronger edges for closer SIC levels
-
-Dynamic graph
-
-- update graph over time
-
----
-
-## Step 4 — Train GNN asset pricing model
-
-Node features:
-
-- firm characteristics
-
-Edges:
-
-- SIC-based industry relations
-
-Outputs:
-
-- firm embeddings
-- factor loadings
-- predicted returns
-
----
-
-## Step 5 — Model evaluation
-
-Models are evaluated using both **statistical** and **economic** metrics.
-
-Statistical metrics:
-
-- Mean Squared Error
-- Mean Absolute Error
-- Out-of-sample \(R^2\)
-
-Asset pricing metrics:
-
-- pricing error
-- factor alpha
-- cross-sectional fit
-
-Economic metrics:
-
-- Sharpe ratio
-- Sortino ratio
-- maximum drawdown
-- long-short portfolio returns
-
----
-
-# Repository Structure
+<sub>Research artifacts reflect the recorded experiment settings. Full results were not regenerated during documentation cleanup.</sub>
